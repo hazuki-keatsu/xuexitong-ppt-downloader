@@ -178,15 +178,15 @@ $ pnpm --version
 - **jsPDF**：浏览器端 PDF 生成库
 - **Tampermonkey API**：用户脚本环境
 
-## 📄 许可证
+## 许可证
 
 MIT License
 
-## 🤝 贡献
+## 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-## 💖 致谢
+## 致谢
 
 - [jsPDF](https://github.com/parallax/jsPDF) - PDF 生成库
 - [Tampermonkey](https://www.tampermonkey.net/) - 用户脚本管理器
