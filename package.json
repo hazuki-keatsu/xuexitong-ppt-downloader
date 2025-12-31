@@ -1,0 +1,39 @@
+{
+  "name": "xuexitong-ppt-downloader",
+  "version": "0.1.0",
+  "description": "适用于学习通网页版的 PPT 下载器",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "keywords": [
+    "Downloader",
+    "学习通"
+  ],
+  "author": "hazuki-keatsu",
+  "license": "MIT",
+  "packageManager": "pnpm@10.27.0",
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/tampermonkey": "^5.0.5",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.51.0",
+    "eslint": "^9.39.2",
+    "prettier": "^3.7.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "tampermonkey": {
+    "namespace": "https://keatsu.top/",
+    "match": "https://*.chaoxing.com/mycourse/studentstudy?*",
+    "grant": [
+      "GM_getValue",
+      "GM_setValue",
+      "GM_xmlhttpRequest"
+    ],
+    "runAt": "document-end"
+  },
+  "dependencies": {
+    "jspdf": "^3.0.4"
+  }
+}
