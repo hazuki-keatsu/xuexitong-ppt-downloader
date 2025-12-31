@@ -59,6 +59,8 @@ export async function extractPPTInfo(
       throw new Error('无法获取图片 URL');
     }
 
+    console.log(`[PPT提取] 找到 ${anchorElements.length} 张图片`);
+
     // 提取基础 URL（去掉文件名部分）
     const baseUrl = firstImg.src.replace(/\/\d+\.png$/, '/');
     const pageCount = anchorElements.length;

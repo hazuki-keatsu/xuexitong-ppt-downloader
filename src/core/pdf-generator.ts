@@ -4,35 +4,48 @@
 
 import { jsPDF } from 'jspdf';
 import type { PPTInfo } from '../types';
-import { downloadImage, blobToDataURL, loadImage, downloadWithConcurrency } from '../utils/image-downloader';
+import {
+  downloadImage,
+  blobToDataURL,
+  loadImage,
+  downloadWithConcurrency,
+} from '../utils/image-downloader';
+import { DownloadController } from './download-controller';
 
 /**
  * 延迟执行，降低CPU占用
  */
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
  * 下载所有图片并生成 PDF
  * 优化点：
- * 1. 批量并发下载（5个并发），提升下载速度
- * 2. 边下载边处理，及时释放内存
- * 3. 添加延迟降低CPU占用
+ * 1. 使用 GM_xmlhttpRequest 下载（绕过 CORS，利用浏览器 HTTP 缓存）
+ * 2. 批量并发下载，提升下载速度
+ * 3. 边下载边处理，及时释放内存
+ * 4. 添加延迟降低CPU占用
+ * 5. 支持通过 DownloadController 取消下载
  */
 export async function generatePDF(
   pptInfo: PPTInfo,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  controller?: DownloadController
 ): Promise<Blob> {
   const { baseUrl, pageCount } = pptInfo;
   const BATCH_SIZE = 15; // 并发数量
   const CPU_COOLDOWN = 20; // 冷却时间
   const YIELD_INTERVAL = 3; // 每一批次的处理的图片数
 
-  // 首先下载第一张图片以确定PDF尺寸
-  console.log('[PDF生成] 下载第1页确定尺寸');
+  // 检查是否已取消
+  controller?.throwIfAborted();
+
+  // 首先获取第一张图片以确定PDF尺寸
+  console.log('[PDF生成] 获取第1页确定尺寸');
   const firstImageUrl = `${baseUrl}1.png`;
   const firstBlob = await downloadImage(firstImageUrl);
+
   const firstDataUrl = await blobToDataURL(firstBlob);
   const firstImg = await loadImage(firstDataUrl);
 
@@ -55,9 +68,12 @@ export async function generatePDF(
   const totalPages = pageCount - 1; // 减去第一页
   const batches = Math.ceil(totalPages / BATCH_SIZE);
   
-  console.log(`[PDF生成] 开始批量下载，共${totalPages}页，分${batches}批，每批${BATCH_SIZE}个并发`);
+  console.log(`[PDF生成] 开始批量处理，共${totalPages}页，分${batches}批，每批${BATCH_SIZE}个并发`);
 
   for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
+    // 每批开始前检查是否取消
+    controller?.throwIfAborted();
+
     const startPage = batchIndex * BATCH_SIZE + 2; // 从第2页开始
     const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
     const batchUrls: string[] = [];
@@ -66,14 +82,17 @@ export async function generatePDF(
       batchUrls.push(`${baseUrl}${i}.png`);
     }
     
-    console.log(`[PDF生成] 批次${batchIndex + 1}/${batches}: 并发下载第${startPage}-${endPage}页`);
+    console.log(`[PDF生成] 批次${batchIndex + 1}/${batches}: 处理第${startPage}-${endPage}页`);
     
     try {
-      // 并发下载这一批图片
-      const blobs = await downloadWithConcurrency(batchUrls, BATCH_SIZE);
+      // 并发获取这一批图片
+      const blobs = await downloadWithConcurrency(batchUrls, BATCH_SIZE, controller);
       
       // 逐个处理并添加到PDF（边处理边释放）
       for (let i = 0; i < blobs.length; i++) {
+        // 每页处理前检查是否取消
+        controller?.throwIfAborted();
+
         const pageNum = startPage + i;
         const blob = blobs[i];
         

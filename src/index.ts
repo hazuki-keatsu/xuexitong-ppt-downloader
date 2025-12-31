@@ -4,12 +4,16 @@
  */
 
 import { DownloadButton } from './ui/download-button';
+import { StopButton } from './ui/stop-button';
 import { findPPTIframes } from './utils/iframe-helper';
 import { extractPPTInfo } from './core/ppt-extractor';
 import { generatePDF, savePDF } from './core/pdf-generator';
+import { DownloadController, DownloadAbortedError } from './core/download-controller';
 
 class XuexitongPPTDownloader {
   private downloadButtons: DownloadButton[] = [];
+  private stopButtons: Map<DownloadButton, StopButton> = new Map();
+  private controllers: Map<DownloadButton, DownloadController> = new Map();
   private processedIframes = new WeakMap<HTMLIFrameElement, boolean>();
   private mutationTimeout: number | null = null;
 
@@ -89,7 +93,23 @@ class XuexitongPPTDownloader {
   /**
    * 处理下载按钮点击
    */
-  private async handleDownload(pptIframe: HTMLIFrameElement, button: DownloadButton): Promise<void> {
+  private async handleDownload(
+    pptIframe: HTMLIFrameElement,
+    button: DownloadButton,
+    iframeDoc: Document
+  ): Promise<void> {
+    // 创建下载控制器
+    const controller = new DownloadController();
+    this.controllers.set(button, controller);
+
+    // 创建并显示停止按钮（锚定在下载按钮右侧）
+    const stopButton = new StopButton(() => {
+      controller.abort('用户点击停止');
+      stopButton.setText('正在停止...');
+    }, iframeDoc, button.getElement());
+    stopButton.mount();
+    this.stopButtons.set(button, stopButton);
+
     button.updateState('正在获取信息...', true);
 
     try {
@@ -98,13 +118,17 @@ class XuexitongPPTDownloader {
       if (!pptInfo) {
         alert('无法获取 PPT 信息，请确保 PPT 已完全加载');
         button.updateState('下载 PPT', false);
+        this.cleanupStopButton(button);
         return;
       }
 
-      // 生成 PDF
+      // 检查是否已取消
+      controller.throwIfAborted();
+
+      // 生成 PDF（传入控制器）
       const pdfBlob = await generatePDF(pptInfo, (current, total) => {
         button.updateState(`下载中 ${current}/${total}...`, true);
-      });
+      }, controller);
 
       // 保存 PDF
       savePDF(pdfBlob, pptInfo.fileName);
@@ -116,14 +140,38 @@ class XuexitongPPTDownloader {
 
       console.log('PDF 生成完成:', pptInfo.fileName);
     } catch (error) {
-      console.error('下载失败:', error);
-      button.updateState('下载失败', false);
+      // 处理取消错误
+      if (error instanceof DownloadAbortedError) {
+        console.log('[PPT下载器] 下载已被用户取消');
+        button.updateState('已取消', false);
+        setTimeout(() => {
+          button.updateState('下载 PPT', false);
+        }, 1500);
+      } else {
+        console.error('下载失败:', error);
+        button.updateState('下载失败', false);
 
-      setTimeout(() => {
-        button.updateState('下载 PPT', false);
-      }, 2000);
+        setTimeout(() => {
+          button.updateState('下载 PPT', false);
+        }, 2000);
 
-      alert('下载失败，请查看控制台了解详情');
+        alert('下载失败，请查看控制台了解详情');
+      }
+    } finally {
+      // 清理停止按钮和控制器
+      this.cleanupStopButton(button);
+      this.controllers.delete(button);
+    }
+  }
+
+  /**
+   * 清理停止按钮
+   */
+  private cleanupStopButton(button: DownloadButton): void {
+    const stopButton = this.stopButtons.get(button);
+    if (stopButton) {
+      stopButton.unmount();
+      this.stopButtons.delete(button);
     }
   }
 
@@ -148,7 +196,7 @@ class XuexitongPPTDownloader {
       
       // 创建并添加下载按钮到iframe内部
       const button = new DownloadButton(
-        () => this.handleDownload(pptIframe, button),
+        () => this.handleDownload(pptIframe, button, iframeDoc),
         iframeDoc
       );
       button.mount();
