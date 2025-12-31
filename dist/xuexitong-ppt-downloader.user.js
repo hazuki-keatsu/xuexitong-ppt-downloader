@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         xuexitong-ppt-downloader
+// @name         学习通 PPT 下载器
 // @namespace    https://keatsu.top/
-// @version      0.1.0
+// @version      0.1.1
 // @description  适用于学习通网页版的 PPT 下载器
 // @author       hazuki-keatsu
 // @match        https://*.chaoxing.com/mycourse/studentstudy*

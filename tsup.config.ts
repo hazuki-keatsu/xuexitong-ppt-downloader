@@ -14,7 +14,6 @@ const pkg = JSON.parse(
 
 // 提取需要的字段（可根据需求调整）
 const {
-  name: pkgName,
   version: pkgVersion,
   description: pkgDescription,
   author: pkgAuthor,
@@ -24,7 +23,7 @@ const {
 
 // 动态生成油猴元信息
 const userScriptMeta = `// ==UserScript==
-// @name         ${pkgName}
+// @name         学习通 PPT 下载器
 // @namespace    ${tmConfig.namespace}
 // @version      ${pkgVersion}
 // @description  ${pkgDescription}
