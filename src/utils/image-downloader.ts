@@ -48,3 +48,34 @@ export function loadImage(dataUrl: string): Promise<HTMLImageElement> {
     img.src = dataUrl;
   });
 }
+
+/**
+ * 并发控制：限制同时执行的Promise数量
+ */
+export async function downloadWithConcurrency(
+  urls: string[],
+  concurrency: number = 5
+): Promise<Blob[]> {
+  const results: Blob[] = new Array(urls.length);
+  const executing: Promise<void>[] = [];
+  
+  for (let i = 0; i < urls.length; i++) {
+    const index = i;
+    const promise = downloadImage(urls[index]).then(blob => {
+      results[index] = blob;
+    });
+    
+    const wrappedPromise = promise.then(() => {
+      executing.splice(executing.indexOf(wrappedPromise), 1);
+    });
+    
+    executing.push(wrappedPromise);
+    
+    if (executing.length >= concurrency) {
+      await Promise.race(executing);
+    }
+  }
+  
+  await Promise.all(executing);
+  return results;
+}

@@ -25,7 +25,7 @@
   },
   "tampermonkey": {
     "namespace": "https://keatsu.top/",
-    "match": "https://*.chaoxing.com/mycourse/studentstudy?*",
+    "match": "https://*.chaoxing.com/mycourse/studentstudy*",
     "grant": [
       "GM_getValue",
       "GM_setValue",

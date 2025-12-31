@@ -5,9 +5,11 @@
 export class DownloadButton {
   private button: HTMLButtonElement;
   private onClick: () => void;
+  private targetDocument: Document;
 
-  constructor(onClick: () => void) {
+  constructor(onClick: () => void, targetDocument: Document = document) {
     this.onClick = onClick;
+    this.targetDocument = targetDocument;
     this.button = this.createButton();
   }
 
@@ -15,15 +17,16 @@ export class DownloadButton {
    * 创建下载按钮
    */
   private createButton(): HTMLButtonElement {
-    const button = document.createElement('button');
+    const button = this.targetDocument.createElement('button');
     button.textContent = '下载 PPT';
+    button.className = 'Downloader Button';
     button.style.cssText = `
       position: fixed;
-      bottom: 20px;
-      left: 350px;
+      bottom: 4px;
+      left: 4px;
       z-index: 9999;
       padding: 10px 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: rgb(51,103,213);
       color: white;
       border: none;
       border-radius: 8px;
@@ -34,18 +37,18 @@ export class DownloadButton {
       transition: all 0.3s ease;
     `;
 
-    // 添加悬停效果
+    // 添加悬停效果（使用passive提升性能）
     button.addEventListener('mouseenter', () => {
       if (!button.disabled) {
         button.style.transform = 'translateY(-2px)';
         button.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
       }
-    });
+    }, { passive: true });
 
     button.addEventListener('mouseleave', () => {
       button.style.transform = 'translateY(0)';
       button.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-    });
+    }, { passive: true });
 
     // 绑定点击事件
     button.addEventListener('click', () => {
@@ -61,9 +64,9 @@ export class DownloadButton {
    * 添加按钮到页面
    */
   public mount(): void {
-    if (!document.body.contains(this.button)) {
-      document.body.appendChild(this.button);
-      console.log('学习通 PPT 下载按钮已添加');
+    const targetBody = this.targetDocument.body;
+    if (targetBody && !targetBody.contains(this.button)) {
+      targetBody.appendChild(this.button);
     }
   }
 
@@ -71,8 +74,9 @@ export class DownloadButton {
    * 从页面移除按钮
    */
   public unmount(): void {
-    if (document.body.contains(this.button)) {
-      document.body.removeChild(this.button);
+    const targetBody = this.targetDocument.body;
+    if (targetBody && targetBody.contains(this.button)) {
+      targetBody.removeChild(this.button);
     }
   }
 
@@ -80,7 +84,8 @@ export class DownloadButton {
    * 检查按钮是否已挂载
    */
   public isMounted(): boolean {
-    return document.body.contains(this.button);
+    const targetBody = this.targetDocument.body;
+    return targetBody ? targetBody.contains(this.button) : false;
   }
 
   /**
