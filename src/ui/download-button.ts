@@ -21,7 +21,7 @@ export class DownloadButton {
     button.textContent = '下载 PPT';
     button.className = 'Downloader Button';
     button.style.cssText = `
-      position: fixed;
+      position: absolute;
       bottom: 4px;
       left: 4px;
       z-index: 9999;
@@ -62,11 +62,12 @@ export class DownloadButton {
 
   /**
    * 添加按钮到页面
+   * @param container 可选的容器元素，默认为 body
    */
-  public mount(): void {
-    const targetBody = this.targetDocument.body;
-    if (targetBody && !targetBody.contains(this.button)) {
-      targetBody.appendChild(this.button);
+  public mount(container?: HTMLElement | null): void {
+    const target = container || this.targetDocument.body;
+    if (target && !target.contains(this.button)) {
+      target.appendChild(this.button);
     }
   }
 
@@ -74,9 +75,8 @@ export class DownloadButton {
    * 从页面移除按钮
    */
   public unmount(): void {
-    const targetBody = this.targetDocument.body;
-    if (targetBody && targetBody.contains(this.button)) {
-      targetBody.removeChild(this.button);
+    if (this.button.parentNode) {
+      this.button.parentNode.removeChild(this.button);
     }
   }
 

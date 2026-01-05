@@ -23,7 +23,7 @@ export class StopButton {
     button.textContent = '停止';
     button.className = 'Downloader StopButton';
     button.style.cssText = `
-      position: fixed;
+      position: absolute;
       bottom: 4px;
       left: 4px;
       z-index: 9999;
@@ -65,9 +65,18 @@ export class StopButton {
     if (this.anchorElement) {
       // 使用 requestAnimationFrame 确保在渲染后再计算位置
       requestAnimationFrame(() => {
-        const rect = this.anchorElement!.getBoundingClientRect();
-        this.button.style.left = `${rect.right + 4}px`;
-        this.button.style.bottom = '4px';
+        // 如果和锚点在同一个容器，使用 offsetLeft 计算相对位置
+        if (this.button.parentNode === this.anchorElement!.parentNode) {
+          const left = this.anchorElement!.offsetLeft + this.anchorElement!.offsetWidth + 4;
+          this.button.style.left = `${left}px`;
+          // 复制锚点的 bottom 样式，保持垂直对齐
+          this.button.style.bottom = this.anchorElement!.style.bottom || '4px';
+        } else {
+          // 降级方案：使用 getBoundingClientRect (针对不同容器的情况)
+          const rect = this.anchorElement!.getBoundingClientRect();
+          this.button.style.left = `${rect.right + 4}px`;
+          this.button.style.bottom = '4px';
+        }
       });
     }
   }
@@ -76,9 +85,13 @@ export class StopButton {
    * 添加按钮到页面
    */
   public mount(): void {
-    const targetBody = this.targetDocument.body;
-    if (targetBody && !targetBody.contains(this.button)) {
-      targetBody.appendChild(this.button);
+    // 优先挂载到锚点元素的父容器，以保持定位上下文一致
+    const target = (this.anchorElement && this.anchorElement.parentNode) 
+      ? this.anchorElement.parentNode 
+      : this.targetDocument.body;
+
+    if (target && !target.contains(this.button)) {
+      target.appendChild(this.button);
       // 挂载后更新位置
       this.updatePosition();
     }
@@ -88,9 +101,8 @@ export class StopButton {
    * 从页面移除按钮
    */
   public unmount(): void {
-    const targetBody = this.targetDocument.body;
-    if (targetBody && targetBody.contains(this.button)) {
-      targetBody.removeChild(this.button);
+    if (this.button.parentNode) {
+      this.button.parentNode.removeChild(this.button);
     }
   }
 
@@ -99,5 +111,12 @@ export class StopButton {
    */
   public setText(text: string): void {
     this.button.textContent = text;
+  }
+
+  /**
+   * 获取按钮元素
+   */
+  public getElement(): HTMLButtonElement {
+    return this.button;
   }
 }

@@ -3,17 +3,15 @@
  * 从学习通网页中提取 PPT 预览图片并合成为 PDF
  */
 
-import { DownloadButton } from './ui/download-button';
-import { StopButton } from './ui/stop-button';
+import { ButtonGroup } from './ui/button-group';
 import { findPPTIframes } from './utils/iframe-helper';
 import { extractPPTInfo } from './core/ppt-extractor';
 import { generatePDF, savePDF } from './core/pdf-generator';
 import { DownloadController, DownloadAbortedError } from './core/download-controller';
 
 class XuexitongPPTDownloader {
-  private downloadButtons: DownloadButton[] = [];
-  private stopButtons: Map<DownloadButton, StopButton> = new Map();
-  private controllers: Map<DownloadButton, DownloadController> = new Map();
+  private buttonGroups: ButtonGroup[] = [];
+  private controllers: Map<ButtonGroup, DownloadController> = new Map();
   private processedIframes = new WeakMap<HTMLIFrameElement, boolean>();
   private mutationTimeout: number | null = null;
 
@@ -55,7 +53,7 @@ class XuexitongPPTDownloader {
       retryCount++;
       
       // 检查是否有按钮已挂载
-      const hasButtons = this.downloadButtons.some(btn => btn.isMounted());
+      const hasButtons = this.buttonGroups.some(btn => btn.isMounted());
       if (hasButtons) {
         clearInterval(timer);
         return;
@@ -95,30 +93,24 @@ class XuexitongPPTDownloader {
    */
   private async handleDownload(
     pptIframe: HTMLIFrameElement,
-    button: DownloadButton,
+    buttonGroup: ButtonGroup,
     iframeDoc: Document
   ): Promise<void> {
     // 创建下载控制器
     const controller = new DownloadController();
-    this.controllers.set(button, controller);
+    this.controllers.set(buttonGroup, controller);
 
-    // 创建并显示停止按钮（锚定在下载按钮右侧）
-    const stopButton = new StopButton(() => {
-      controller.abort('用户点击停止');
-      stopButton.setText('正在停止...');
-    }, iframeDoc, button.getElement());
-    stopButton.mount();
-    this.stopButtons.set(button, stopButton);
-
-    button.updateState('正在获取信息...', true);
+    // 切换到下载状态
+    buttonGroup.startDownload();
+    buttonGroup.updateDownloadState('正在获取信息...', true);
 
     try {
       // 提取 PPT 信息
       const pptInfo = await extractPPTInfo(pptIframe);
       if (!pptInfo) {
         alert('无法获取 PPT 信息，请确保 PPT 已完全加载');
-        button.updateState('下载 PPT', false);
-        this.cleanupStopButton(button);
+        buttonGroup.updateDownloadState('下载 PPT', false);
+        buttonGroup.finishDownload();
         return;
       }
 
@@ -127,15 +119,15 @@ class XuexitongPPTDownloader {
 
       // 生成 PDF（传入控制器）
       const pdfBlob = await generatePDF(pptInfo, (current, total) => {
-        button.updateState(`下载中 ${current}/${total}...`, true);
+        buttonGroup.updateDownloadState(`下载中 ${current}/${total}...`, true);
       }, controller);
 
       // 保存 PDF
       savePDF(pdfBlob, pptInfo.fileName);
 
-      button.updateState('下载完成！', false);
+      buttonGroup.updateDownloadState('下载完成！', false);
       setTimeout(() => {
-        button.updateState('下载 PPT', false);
+        buttonGroup.updateDownloadState('下载 PPT', false);
       }, 2000);
 
       console.log('PDF 生成完成:', pptInfo.fileName);
@@ -143,35 +135,35 @@ class XuexitongPPTDownloader {
       // 处理取消错误
       if (error instanceof DownloadAbortedError) {
         console.log('[PPT下载器] 下载已被用户取消');
-        button.updateState('已取消', false);
+        buttonGroup.updateDownloadState('已取消', false);
         setTimeout(() => {
-          button.updateState('下载 PPT', false);
+          buttonGroup.updateDownloadState('下载 PPT', false);
         }, 1500);
       } else {
         console.error('下载失败:', error);
-        button.updateState('下载失败', false);
+        buttonGroup.updateDownloadState('下载失败', false);
 
         setTimeout(() => {
-          button.updateState('下载 PPT', false);
+          buttonGroup.updateDownloadState('下载 PPT', false);
         }, 2000);
 
         alert('下载失败，请查看控制台了解详情');
       }
     } finally {
-      // 清理停止按钮和控制器
-      this.cleanupStopButton(button);
-      this.controllers.delete(button);
+      // 结束下载状态
+      buttonGroup.finishDownload();
+      this.controllers.delete(buttonGroup);
     }
   }
 
   /**
-   * 清理停止按钮
+   * 处理停止按钮点击
    */
-  private cleanupStopButton(button: DownloadButton): void {
-    const stopButton = this.stopButtons.get(button);
-    if (stopButton) {
-      stopButton.unmount();
-      this.stopButtons.delete(button);
+  private handleStop(buttonGroup: ButtonGroup): void {
+    const controller = this.controllers.get(buttonGroup);
+    if (controller) {
+      controller.abort('用户点击停止');
+      buttonGroup.updateStopText('正在停止...');
     }
   }
 
@@ -194,19 +186,24 @@ class XuexitongPPTDownloader {
       const iframeDoc = pptIframe.contentDocument || pptIframe.contentWindow?.document;
       if (!iframeDoc?.body) continue;
       
-      // 创建并添加下载按钮到iframe内部
-      const button = new DownloadButton(
-        () => this.handleDownload(pptIframe, button, iframeDoc),
+      // 尝试查找 navigation 容器
+      const navContainer = iframeDoc.getElementById('navigation');
+      
+      // 创建并添加按钮组到iframe内部
+      const buttonGroup = new ButtonGroup(
+        () => this.handleDownload(pptIframe, buttonGroup, iframeDoc),
+        () => this.handleStop(buttonGroup),
         iframeDoc
       );
-      button.mount();
-      this.downloadButtons.push(button);
+      
+      buttonGroup.mount(navContainer);
+      this.buttonGroups.push(buttonGroup);
       this.processedIframes.set(pptIframe, true);
       newButtonCount++;
     }
     
     if (newButtonCount > 0) {
-      console.log(`[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.downloadButtons.length} 个`);
+      console.log(`[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`);
     }
   }
 }
