@@ -62,7 +62,6 @@ export class DownloadButton {
 
   /**
    * 添加按钮到页面
-   * @param container 可选的容器元素，默认为 body
    */
   public mount(container?: HTMLElement | null): void {
     const target = container || this.targetDocument.body;

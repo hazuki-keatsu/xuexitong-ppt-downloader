@@ -72,7 +72,7 @@ export class StopButton {
           // 复制锚点的 bottom 样式，保持垂直对齐
           this.button.style.bottom = this.anchorElement!.style.bottom || '4px';
         } else {
-          // 降级方案：使用 getBoundingClientRect (针对不同容器的情况)
+          // 降级方案：使用 getBoundingClientRect 以针对不同容器的情况
           const rect = this.anchorElement!.getBoundingClientRect();
           this.button.style.left = `${rect.right + 4}px`;
           this.button.style.bottom = '4px';

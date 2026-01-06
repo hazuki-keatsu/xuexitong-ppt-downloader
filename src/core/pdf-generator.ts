@@ -2,31 +2,51 @@
  * PDF 生成器
  */
 
-import { jsPDF } from 'jspdf';
 import type { PPTInfo } from '../types';
 import {
   downloadImage,
+  downloadImageAsArrayBuffer,
   blobToDataURL,
   loadImage,
   downloadWithConcurrency,
 } from '../utils/image-downloader';
 import { DownloadController } from './download-controller';
 
+import { pdfWorkerEntry } from './pdf-worker';
+
 /**
- * 延迟执行，降低CPU占用
+ * 延迟执行
  */
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+
+/**
+ * 创建 Worker 实例
+ */
+function createWorker(): Worker {
+  // 注入全局变量并序列化 Worker 函数
+  const jspdfSource = process.env.JSPDF_SOURCE;
+  const workerBody = pdfWorkerEntry.toString();
+  
+  // 引入 jsPDF 包的 umd 版本
+  const code = `
+    ${jspdfSource}
+    ;
+    (${workerBody})();
+  `;
+  
+  const blob = new Blob([code], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  const worker = new Worker(url);
+  // 不立即 revoke，确保 Worker 加载完成
+  return worker;
+}
+
 /**
  * 下载所有图片并生成 PDF
- * 优化点：
- * 1. 使用 GM_xmlhttpRequest 下载（绕过 CORS，利用浏览器 HTTP 缓存）
- * 2. 批量并发下载，提升下载速度
- * 3. 边下载边处理，及时释放内存
- * 4. 添加延迟降低CPU占用
- * 5. 支持通过 DownloadController 取消下载
+ * 使用 Web Worker 将 CPU 密集型任务移出主线程，解决 UI 卡顿问题
  */
 export async function generatePDF(
   pptInfo: PPTInfo,
@@ -34,124 +54,112 @@ export async function generatePDF(
   controller?: DownloadController
 ): Promise<Blob> {
   const { baseUrl, pageCount } = pptInfo;
-  const BATCH_SIZE = 15; // 并发数量
-  const CPU_COOLDOWN = 20; // 冷却时间
-  const YIELD_INTERVAL = 3; // 每一批次的处理的图片数
+  const BATCH_SIZE = 10;
+  const CPU_COOLDOWN = 50;
 
-  // 检查是否已取消
+  // 1. 获取第一张图片以确定PDF尺寸
+  console.log('[PDF生成] 获取第1页确定尺寸');
   controller?.throwIfAborted();
 
-  // 首先获取第一张图片以确定PDF尺寸
-  console.log('[PDF生成] 获取第1页确定尺寸');
+  // 需要在主线程解析尺寸
   const firstImageUrl = `${baseUrl}1.png`;
-  const firstBlob = await downloadImage(firstImageUrl);
-
+  const firstBlob = await downloadImage(firstImageUrl); 
   const firstDataUrl = await blobToDataURL(firstBlob);
   const firstImg = await loadImage(firstDataUrl);
 
-  // 根据第一张图片的实际尺寸创建 PDF
   const pxToMm = 25.4 / 96;
   const pageWidth = firstImg.width * pxToMm;
   const pageHeight = firstImg.height * pxToMm;
 
-  const pdf = new jsPDF({
-    orientation: pageWidth > pageHeight ? 'landscape' : 'portrait',
-    unit: 'mm',
-    format: [pageWidth, pageHeight],
-  });
+  // 将第一张图转为 ArrayBuffer 传给 Worker
+  const firstArrayBuffer = await firstBlob.arrayBuffer();
 
-  // 添加第一页
-  pdf.addImage(firstDataUrl, 'PNG', 0, 0, pageWidth, pageHeight);
-  onProgress?.(1, pageCount);
+  // 2. 初始化 Worker
+  const worker = createWorker();
   
-  // 分批并发下载并处理剩余页面
-  const totalPages = pageCount - 1; // 减去第一页
-  const batches = Math.ceil(totalPages / BATCH_SIZE);
-  
-  console.log(`[PDF生成] 开始批量处理，共${totalPages}页，分${batches}批，每批${BATCH_SIZE}个并发`);
+  return new Promise(async (resolve, reject) => {
+    // 监听 Worker 消息
+    worker.onmessage = (e) => {
+      const { type, blob, error } = e.data;
+      if (type === 'DONE') {
+        resolve(blob);
+        worker.terminate();
+      } else if (type === 'ERROR') {
+        reject(new Error(error));
+        worker.terminate();
+      }
+    };
 
-  for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
-    // 每批开始前检查是否取消
-    controller?.throwIfAborted();
+    worker.onerror = (err) => {
+      reject(err);
+      worker.terminate();
+    };
 
-    const startPage = batchIndex * BATCH_SIZE + 2; // 从第2页开始
-    const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
-    const batchUrls: string[] = [];
-    
-    for (let i = startPage; i <= endPage; i++) {
-      batchUrls.push(`${baseUrl}${i}.png`);
-    }
-    
-    console.log(`[PDF生成] 批次${batchIndex + 1}/${batches}: 处理第${startPage}-${endPage}页`);
-    
+    // 发送初始化消息
+    worker.postMessage({
+      type: 'INIT',
+      payload: {
+        width: pageWidth,
+        height: pageHeight,
+        firstPageData: firstArrayBuffer
+      }
+    }, [firstArrayBuffer]);
+
+    onProgress?.(1, pageCount);
+
+    // 3. 批量下载并发送给 Worker
+    const totalPages = pageCount - 1; 
+    const batches = Math.ceil(totalPages / BATCH_SIZE);
+
     try {
-      // 并发获取这一批图片
-      const blobs = await downloadWithConcurrency(batchUrls, BATCH_SIZE, controller);
-      
-      // 逐个处理并添加到PDF（边处理边释放）
-      for (let i = 0; i < blobs.length; i++) {
-        // 每页处理前检查是否取消
+      for (let batchIndex = 0; batchIndex < batches; batchIndex++) {
         controller?.throwIfAborted();
 
-        const pageNum = startPage + i;
-        const blob = blobs[i];
-        
-        if (!blob) {
-          console.warn(`[PDF生成] 第${pageNum}页下载失败，跳过`);
-          continue;
+        const startPage = batchIndex * BATCH_SIZE + 2;
+        const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
+        const batchUrls: string[] = [];
+
+        for (let i = startPage; i <= endPage; i++) {
+          batchUrls.push(`${baseUrl}${i}.png`);
         }
+
+        console.log(`[PDF生成] 批次${batchIndex + 1}/${batches}: 处理第${startPage}-${endPage}页`);
         
-        try {
-          // 转换为DataURL并加载
-          const dataUrl = await blobToDataURL(blob);
-          const img = await loadImage(dataUrl);
+        // 并发下载为 ArrayBuffer
+        const buffers = await downloadWithConcurrency(batchUrls, downloadImageAsArrayBuffer, BATCH_SIZE, controller);
+        
+        // 发送给 Worker
+        for (let i = 0; i < buffers.length; i++) {
+          controller?.throwIfAborted();
           
-          // 添加新页面
-          pdf.addPage([pageWidth, pageHeight]);
+          const buffer = buffers[i];
+          if (!buffer) continue;
           
-          // 计算图片尺寸（保持原始比例，适应页面）
-          const imgWidth = img.width * pxToMm;
-          const imgHeight = img.height * pxToMm;
+          const pageNum = startPage + i;
           
-          let width = imgWidth;
-          let height = imgHeight;
-          let x = 0;
-          let y = 0;
-          
-          // 如果图片尺寸与第一张不同，进行缩放以适应页面
-          if (imgWidth > pageWidth || imgHeight > pageHeight) {
-            const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-            width = imgWidth * ratio;
-            height = imgHeight * ratio;
-            x = (pageWidth - width) / 2;
-            y = (pageHeight - height) / 2;
-          }
-          
-          pdf.addImage(dataUrl, 'PNG', x, y, width, height);
+          worker.postMessage({
+            type: 'ADD_PAGE',
+            payload: {
+              data: buffer,
+              pageNum
+            }
+          }, [buffer]);
+
           onProgress?.(pageNum, pageCount);
-          
-          // 每处理YIELD_INTERVAL页后yield一次，让浏览器呼吸
-          if (i % YIELD_INTERVAL === 0) {
-            await sleep(0); // yield给主线程
-          }
-          
-          // 处理完后，blob和dataUrl会自动被GC回收
-          // img对象也会在作用域外被回收
-        } catch (error) {
-          console.error(`[PDF生成] 第${pageNum}页处理失败:`, error);
         }
+        
+        await sleep(CPU_COOLDOWN);
       }
       
-      // 批次处理完后暂停一小段时间，降低CPU占用
-      await sleep(CPU_COOLDOWN);
-      
-    } catch (error) {
-      console.error(`[PDF生成] 批次${batchIndex + 1}下载失败:`, error);
+      console.log('[PDF生成] 所有数据已发送 Worker，等待生成...');
+      worker.postMessage({ type: 'FINISH' });
+
+    } catch (err) {
+      worker.terminate();
+      // 如果是取消错误，直接抛出
+      reject(err);
     }
-  }
-  
-  console.log('[PDF生成] 所有页面处理完毕，生成PDF文件');
-  return pdf.output('blob');
+  });
 }
 
 /**

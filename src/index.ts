@@ -34,10 +34,8 @@ class XuexitongPPTDownloader {
       this.addDownloadButton();
     }
 
-    // 监听动态加载的 iframe
     this.observeIframes();
     
-    // 定期重试（针对动态加载的内容）
     this.startRetryTimer();
   }
   
@@ -47,7 +45,7 @@ class XuexitongPPTDownloader {
   private startRetryTimer(): void {
     let retryCount = 0;
     const maxRetries = 10;
-    const retryInterval = 1000; // 每秒重试一次
+    const retryInterval = 2000;
     
     const timer = setInterval(() => {
       retryCount++;
@@ -68,7 +66,7 @@ class XuexitongPPTDownloader {
   }
 
   /**
-   * 监听页面中动态加载的 iframe（带节流）
+   * 监听页面中动态加载的 iframe
    */
   private observeIframes(): void {
     const observer = new MutationObserver(() => {
@@ -117,7 +115,7 @@ class XuexitongPPTDownloader {
       // 检查是否已取消
       controller.throwIfAborted();
 
-      // 生成 PDF（传入控制器）
+      // 生成 PDF
       const pdfBlob = await generatePDF(pptInfo, (current, total) => {
         buttonGroup.updateDownloadState(`下载中 ${current}/${total}...`, true);
       }, controller);
@@ -177,19 +175,19 @@ class XuexitongPPTDownloader {
     
     let newButtonCount = 0;
     
-    // 为每个iframe创建按钮
+    // 为每个 iframe 创建按钮
     for (const pptIframe of pptIframes) {
-      // 使用WeakMap缓存，避免重复处理
+      // 使用 WeakMap 缓存，避免重复处理
       if (this.processedIframes.has(pptIframe)) continue;
       
-      // 获取iframe的document
+      // 获取 iframe 的 document
       const iframeDoc = pptIframe.contentDocument || pptIframe.contentWindow?.document;
       if (!iframeDoc?.body) continue;
       
       // 尝试查找 navigation 容器
       const navContainer = iframeDoc.getElementById('navigation');
       
-      // 创建并添加按钮组到iframe内部
+      // 创建并添加按钮组到 iframe 内部
       const buttonGroup = new ButtonGroup(
         () => this.handleDownload(pptIframe, buttonGroup, iframeDoc),
         () => this.handleStop(buttonGroup),

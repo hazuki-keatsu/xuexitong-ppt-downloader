@@ -1,5 +1,5 @@
 /**
- * 下载控制器 - 用于管理下载任务的取消
+ * 下载控制器
  */
 
 export class DownloadController {

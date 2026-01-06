@@ -8,7 +8,6 @@
 export function waitForIframeLoad(iframe: HTMLIFrameElement): Promise<void> {
   return new Promise((resolve) => {
     if (iframe.contentDocument?.readyState === 'complete') {
-      // 使用requestIdleCallback代替固定延迟，更智能
       if ('requestIdleCallback' in window) {
         requestIdleCallback(() => resolve(), { timeout: 500 });
       } else {
@@ -57,7 +56,7 @@ function findIframeRecursively(doc: Document, depth: number = 0, results: HTMLIF
       findIframeRecursively(iframeDoc, depth + 1, results);
       
     } catch (e) {
-      // 跨域限制，忽略
+      // 跨域限制
     }
   }
   
@@ -77,7 +76,7 @@ export function findPPTIframes(): HTMLIFrameElement[] {
     return results;
   }
   
-  // 策略2: 使用属性匹配（备用方案）
+  // 策略2: 使用属性匹配
   const allIframes = document.querySelectorAll('iframe');
   const matched: HTMLIFrameElement[] = [];
   

@@ -3,7 +3,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// 解决 ESModule 中 __dirname 缺失的问题（如果用 CommonJS 可直接用 __dirname）
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -12,16 +11,18 @@ const pkg = JSON.parse(
   fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
 );
 
-// 提取需要的字段（可根据需求调整）
+// 读取 jsPDF 源码
+const jspdfPath = path.resolve(__dirname, 'node_modules/jspdf/dist/jspdf.umd.min.js');
+const jspdfSource = fs.readFileSync(jspdfPath, 'utf-8');
+
 const {
   version: pkgVersion,
   description: pkgDescription,
   author: pkgAuthor,
   license: pkgLicense,
-  tampermonkey: tmConfig // 自定义的油猴配置
+  tampermonkey: tmConfig
 } = pkg;
 
-// 动态生成油猴元信息
 const userScriptMeta = `// ==UserScript==
 // @name         学习通 PPT 下载器
 // @namespace    ${tmConfig.namespace}
@@ -48,6 +49,9 @@ export default defineConfig({
   },
   minify: true,
   sourcemap: false,
+  define: {
+    'process.env.JSPDF_SOURCE': JSON.stringify(jspdfSource)
+  },
   banner: {
     js: userScriptMeta
   }

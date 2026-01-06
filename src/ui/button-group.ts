@@ -63,8 +63,6 @@ export class ButtonGroup {
     button.style.bottom = 'auto';
     button.style.left = 'auto';
     button.style.margin = '0';
-    // 移除阴影以免重叠或看起来奇怪（可选，视视觉效果而定）
-    // button.style.boxShadow = 'none'; 
   }
 
   /**
