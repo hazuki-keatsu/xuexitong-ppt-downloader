@@ -18,6 +18,7 @@
 - **原画质量**：保持原始 PNG 格式，无损画质
 - **智能布局**：自动适配 PPT 原始尺寸
 - **一键导出**：所有页面合并为单个 PDF 文件
+- **高效快速**：使用 Web Worker 来进行任务的高效执行
 
 ## 安装
 
@@ -45,7 +46,7 @@
 
 - **下载 PPT**：初始状态，点击开始下载
 - **正在获取信息...**：正在分析 PPT 页数和 URL
-- **下载中 X/Y...**：显示当前下载进度（X=已完成，Y=总页数）
+- **下载中...**：显示当前下载进度
 - **下载完成！**：PDF 生成完毕，已自动保存
 - **下载失败**：出现错误，请查看控制台日志
 
@@ -61,13 +62,17 @@ xuexitong-ppt-downloader/
 │   ├── index.ts                    # 主入口，脚本初始化和协调
 │   ├── types.ts                    # TypeScript 类型定义
 │   ├── core/                       # 核心业务逻辑
+│   │   ├── ppt-worker.ts           # Web Worker 逻辑主体
 │   │   ├── ppt-extractor.ts        # PPT 信息提取器
-│   │   └── pdf-generator.ts        # PDF 生成器（并发下载+合成）
+│   │   ├── download-controller.ts  # 下载控制器
+│   │   └── pdf-generator.ts        # PDF 生成器
 │   ├── ui/                         # 用户界面组件
+│   │   ├── button-group.ts         # 两个按钮的进一步封装
+│   │   ├── stop-button.ts          # 停止按钮组件
 │   │   └── download-button.ts      # 下载按钮组件
 │   └── utils/                      # 工具函数
 │       ├── iframe-helper.ts        # iframe 查找和等待工具
-│       └── image-downloader.ts     # 图片下载工具（支持并发）
+│       └── image-downloader.ts     # 图片下载工具
 ├── dist/                           # 构建输出目录
 │   └── xuexitong-ppt-downloader.user.js  # 最终用户脚本
 ├── package.json                    # 项目配置和依赖
@@ -106,29 +111,20 @@ xuexitong-ppt-downloader/
    └── 计算总页数和 baseUrl
    ↓
 7. 并发下载图片 (image-downloader.ts)
-   ├── 批量下载（15 个并发，可自行修改源码调整）
-   ├── 使用 GM_xmlhttpRequest 下载为 Blob
-   └── 转换为 DataURL
+   ├── 批量下载（10 个并发，可自行修改源码调整）
+   ├── 使用 GM_xmlhttpRequest 下载为 ArrayBuffer
+   └── 通过零拷贝将数据传递给 Worker
    ↓
-8. 生成 PDF (pdf-generator.ts)
-   ├── 根据第一张图片确定页面尺寸
-   ├── 分批处理（每批 15 张）
-   ├── 每批暂停 20ms 降低 CPU 占用
-   ├── 每 3 页 yield 一次，避免卡死
-   └── 及时释放已处理的图片内存
+8. 生成 PDF (pdf-generator.ts & pdf-worker.ts)
+   ├── 主线程：负责任务调度和 UI 更新
+   ├── Worker线程：负责 CPU 密集型计算
+   │   ├── 初始化本地注入的 jsPDF 库
+   │   ├── 接收 ArrayBuffer 并添加到 PDF
+   │   └── 生成最终 PDF Blob
+   └── 全程不阻塞主线程，保持 UI 流畅
    ↓
 9. 保存文件
    └── 使用 Blob URL 触发浏览器下载
-```
-
-## 性能配置
-
-可在 `src/core/pdf-generator.ts` 中调整性能参数：
-
-```typescript
-const BATCH_SIZE = 15;        // 并发下载数量（1-20）
-const CPU_COOLDOWN = 20;      // 批次冷却时间（ms）
-const YIELD_INTERVAL = 3;     // yield 间隔（页数）
 ```
 
 ## 注意事项
@@ -137,18 +133,11 @@ const YIELD_INTERVAL = 3;     // yield 间隔（页数）
 
 1. **仅支持学习通平台**：脚本仅在 `https://*.chaoxing.com/mycourse/studentstudy*` 域名下生效
 2. **需要完整加载**：确保 PPT 在页面中已完全加载后再下载
-3. **大文件耗时**：50 页 PPT 约需 45-60 秒（取决于网络速度）
-4. **浏览器要求**：建议使用 Chrome/Edge/Firefox 最新版
+3. **浏览器要求**：建议使用 Chrome/Edge/Firefox 最新版
 
 ### 常见问题
 
-#### Q1: 风扇狂转/电脑卡顿？
-
-这是正常现象，这是多方面原因引起的：
-1. `jspdf` 这个库性能过于累赘
-2. 所有的图片下载之后都被放进了内存
-
-#### Q2: 为什么不直接从内存中读取图片数据而是重新请求？
+#### Q1: 为什么不直接从内存中读取图片数据而是重新请求？
 
 由于浏览器的安全模型，脚本没有办法绕过 CORS 直接从内存中读取跨域图片的像素数据。这是浏览器故意设计的安全机制，防止恶意脚本窃取用户的敏感图片数据。
 
