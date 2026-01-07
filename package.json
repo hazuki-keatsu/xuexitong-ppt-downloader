@@ -30,7 +30,10 @@
       "GM_setValue",
       "GM_xmlhttpRequest"
     ],
-    "runAt": "document-end"
+    "runAt": "document-end",
+    "updateURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js",
+    "downloadURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js",
+    "homepageURL": "https://github.com/hazuki-keatsu/xuexitong-ppt-downloader"
   },
   "dependencies": {
     "jspdf": "^3.0.4"

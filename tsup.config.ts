@@ -32,13 +32,16 @@ const userScriptMeta = `// ==UserScript==
 // @match        ${tmConfig.match}
 ${tmConfig.grant.map((grant: any) => `// @grant        ${grant}`).join('\n')}
 // @run-at       ${tmConfig.runAt}
+// @updateURL    ${tmConfig.updateURL}
+// @downloadURL  ${tmConfig.downloadURL}
+// @homepageURL  ${tmConfig.homepageURL}
 // @license      ${pkgLicense}
 // ==/UserScript==
 `;
 
 export default defineConfig({
   entry: {
-    [`xuexitong-ppt-downloader_${pkgVersion}.user`]: 'src/index.ts',
+    'xuexitong-ppt-downloader.user': 'src/index.ts',
   },
   format: ['iife'],
   outDir: 'dist',
@@ -54,5 +57,20 @@ export default defineConfig({
   },
   banner: {
     js: userScriptMeta
+  },
+  onSuccess: async () => {
+    const legacyDir = path.join(__dirname, 'dist', 'legacy');
+    if (!fs.existsSync(legacyDir)) {
+      fs.mkdirSync(legacyDir, { recursive: true });
+    }
+    // 这里的文件名需要跟 entry key + outExtension 对应
+    const baseName = 'xuexitong-ppt-downloader.user.js';
+    const srcPath = path.join(__dirname, 'dist', baseName);
+    const destPath = path.join(legacyDir, baseName.replace('.user.js', `_${pkgVersion}.user.js`));
+    
+    if (fs.existsSync(srcPath)) {
+      fs.copyFileSync(srcPath, destPath);
+      console.log(`✅ Backup created: ${destPath}`);
+    }
   }
 });

@@ -9,6 +9,9 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @run-at       document-end
+// @updateURL    https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js
+// @downloadURL  https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js
+// @homepageURL  https://github.com/hazuki-keatsu/xuexitong-ppt-downloader
 // @license      MIT
 // ==/UserScript==
 
