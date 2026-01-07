@@ -115,13 +115,24 @@ class XuexitongPPTDownloader {
       // 检查是否已取消
       controller.throwIfAborted();
 
-      // 生成 PDF
-      const pdfBlob = await generatePDF(pptInfo, (current, total) => {
+      // 生成 PDF (可能返回单个 Blob 或 Blob 数组)
+      const result = await generatePDF(pptInfo, (current, total) => {
         buttonGroup.updateDownloadState(`下载中 ${current}/${total}...`, true);
       }, controller);
 
       // 保存 PDF
-      savePDF(pdfBlob, pptInfo.fileName);
+      if (Array.isArray(result)) {
+        // 分卷保存
+        result.forEach((blob, index) => {
+          // 移除扩展名，加上后缀
+          const name = pptInfo.fileName.replace(/\.pdf$/i, '');
+          const partName = `${name}_Part${index + 1}.pdf`;
+          savePDF(blob, partName);
+        });
+      } else {
+        // 单个文件保存
+        savePDF(result, pptInfo.fileName);
+      }
 
       buttonGroup.updateDownloadState('下载完成！', false);
       setTimeout(() => {

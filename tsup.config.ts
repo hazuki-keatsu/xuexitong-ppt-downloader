@@ -38,7 +38,7 @@ ${tmConfig.grant.map((grant: any) => `// @grant        ${grant}`).join('\n')}
 
 export default defineConfig({
   entry: {
-    'xuexitong-ppt-downloader.user': 'src/index.ts',
+    [`xuexitong-ppt-downloader_${pkgVersion}.user`]: 'src/index.ts',
   },
   format: ['iife'],
   outDir: 'dist',

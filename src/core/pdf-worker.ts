@@ -30,7 +30,8 @@ export function pdfWorkerEntry() {
 
         // 添加第一页
         if (payload.firstPageData) {
-          pdf.addImage(new Uint8Array(payload.firstPageData), 'PNG', 0, 0, pageWidth, pageHeight);
+          const format = payload.format || 'PNG';
+          pdf.addImage(new Uint8Array(payload.firstPageData), format, 0, 0, pageWidth, pageHeight);
         }
         
         ctx.postMessage({ type: 'INIT_SUCCESS' });
@@ -39,8 +40,9 @@ export function pdfWorkerEntry() {
         // 添加新页面
         pdf.addPage([pageWidth, pageHeight]);
         
-        // 添加图片 (假设传过来的是 ArrayBuffer)
-        pdf.addImage(new Uint8Array(payload.data), 'PNG', 0, 0, pageWidth, pageHeight);
+        // 添加图片 
+        const format = payload.format || 'PNG';
+        pdf.addImage(new Uint8Array(payload.data), format, 0, 0, pageWidth, pageHeight);
         
         // 通知完成
         ctx.postMessage({ type: 'PAGE_ADDED', pageNum: payload.pageNum });
