@@ -145,7 +145,7 @@ xuexitong-ppt-downloader/
 
 在生成最终文件的过程中，程序尝试将所有数据片段拼接成一个超长的字符串。浏览器的 JavaScript 引擎对单个字符串的长度有严格限制，通常在几百 MB 左右。当页数较多的 PPT 的数据总量超过这个限制时，就会 javascript 引擎就会抛出 Invalid string length 错误，导致 Workers 崩溃。
 
-所以我对生成的 PDF 文件的长度做了限制，最多只能在一个文件中放 150 张 PPT。您可以使用 [qpdf](https://github.com/qpdf/qpdf) 来在本地对多个 PDF 进行拼接。
+所以我对生成的 PDF 文件的长度做了限制，最多只能在一个文件中放 500 张 PPT。您可以使用 [qpdf](https://github.com/qpdf/qpdf) 来在本地对多个 PDF 进行拼接。
 
 ### 安全说明
 

@@ -59,11 +59,22 @@ export async function generatePDF(
   if (pageCount <= CONFIG.MAX_PAGES_PER_PDF) {
     return generatePDFSegment(pptInfo, 1, pageCount, onProgress, controller);
   } else {
-    // 自动分卷逻辑
-    console.log(`[PDF生成] 页数(${pageCount})超过限制(${CONFIG.MAX_PAGES_PER_PDF})，启动自动分卷模式`);
-    
-    const results: Blob[] = [];
     const parts = Math.ceil(pageCount / CONFIG.MAX_PAGES_PER_PDF);
+
+    const shouldSplit = confirm(
+      `当前PPT页数较多(${pageCount}页)，建议分卷下载以避免浏览器崩溃。\n\n` +
+      `点击“确定”：自动分为 ${parts} 个文件下载（推荐）\n` +
+      `点击“取消”：尝试合并为一个文件下载（风险较大）`
+    );
+
+    if (!shouldSplit) {
+      console.log(`[PDF生成] 用户选择强制合并下载，共 ${pageCount} 页`);
+      return generatePDFSegment(pptInfo, 1, pageCount, onProgress, controller);
+    }
+
+    console.log(`[PDF生成] 页数(${pageCount})超过限制(${CONFIG.MAX_PAGES_PER_PDF})，启动自动分卷模式`);
+
+    const results: Blob[] = [];
     
     for (let i = 0; i < parts; i++) {
       controller?.throwIfAborted();
