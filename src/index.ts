@@ -12,7 +12,8 @@ import { DownloadController, DownloadAbortedError } from './core/download-contro
 class XuexitongPPTDownloader {
   private buttonGroups: ButtonGroup[] = [];
   private controllers: Map<ButtonGroup, DownloadController> = new Map();
-  private processedIframes = new WeakMap<HTMLIFrameElement, boolean>();
+  // 存储 iframe 对应的 document 对象，用于检测 iframe 是否发生了导航或重载
+  private processedIframes = new WeakMap<HTMLIFrameElement, Document>();
   private mutationTimeout: number | null = null;
 
   constructor() {
@@ -35,6 +36,7 @@ class XuexitongPPTDownloader {
     }
 
     this.observeIframes();
+    this.initUrlChangeListener();
     
     this.startRetryTimer();
   }
@@ -84,6 +86,36 @@ class XuexitongPPTDownloader {
       childList: true,
       subtree: true,
     });
+  }
+
+  /**
+   * 监听 URL 变化 (兼容 SPA 路由)
+   */
+  private initUrlChangeListener(): void {
+    const handleUrlChange = () => {
+      // URL 变化通常意味着页面内容将要更新，延迟检测
+      setTimeout(() => this.addDownloadButton(), 500);
+      setTimeout(() => this.addDownloadButton(), 1500);
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+
+    // 劫持 history 方法以监听 pushState 和 replaceState
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function(...args) {
+      const result = originalPushState.apply(this, args);
+      handleUrlChange();
+      return result;
+    };
+
+    history.replaceState = function(...args) {
+      const result = originalReplaceState.apply(this, args);
+      handleUrlChange();
+      return result;
+    };
   }
 
   /**
@@ -188,12 +220,14 @@ class XuexitongPPTDownloader {
     
     // 为每个 iframe 创建按钮
     for (const pptIframe of pptIframes) {
-      // 使用 WeakMap 缓存，避免重复处理
-      if (this.processedIframes.has(pptIframe)) continue;
-      
       // 获取 iframe 的 document
       const iframeDoc = pptIframe.contentDocument || pptIframe.contentWindow?.document;
       if (!iframeDoc?.body) continue;
+
+      // 检查是否已经为当前的 document 实例添加过按钮
+      // 如果 iframe 发生了内部跳转，document 对象会改变，需要重新添加按钮
+      const lastProcessedDoc = this.processedIframes.get(pptIframe);
+      if (lastProcessedDoc === iframeDoc) continue;
       
       // 尝试查找 navigation 容器
       const navContainer = iframeDoc.getElementById('navigation');
@@ -207,7 +241,9 @@ class XuexitongPPTDownloader {
       
       buttonGroup.mount(navContainer);
       this.buttonGroups.push(buttonGroup);
-      this.processedIframes.set(pptIframe, true);
+      
+      // 更新缓存为当前的 document 对象
+      this.processedIframes.set(pptIframe, iframeDoc);
       newButtonCount++;
     }
     
