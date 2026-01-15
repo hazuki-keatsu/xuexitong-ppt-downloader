@@ -10,7 +10,7 @@
 > [!NOTE]
 > 请在合理的范围内使用本脚本！！
 > 
-> 脚本作者对于脚本使用者的任何行为不负任何责任，本仓库仅为仓库作者的学习目的而建立（即考试压力太大，不想复习，吃饱了撑着），如有任何侵犯您的合法权益的行为，请联系我进行修改，或者删除。
+> 脚本作者对于脚本使用者的任何行为不负任何责任，本仓库仅为仓库作者的学习目的而建立，如有任何侵犯您的合法权益的行为，请联系我进行修改，或者删除。
 
 ![Preview](./preview.png)
 
@@ -78,11 +78,13 @@ xuexitong-ppt-downloader/
 │   │   ├── button-group.ts         # 两个按钮的进一步封装
 │   │   ├── stop-button.ts          # 停止按钮组件
 │   │   └── download-button.ts      # 下载按钮组件
+│   ├── extension/                  # Edge/Chrome 拓展相关的代码
+│   │   ├── extension-entry.ts      # 拓展入口
+│   │   └── extension-polyfill.ts   # 油猴代码拓展兼容层
 │   └── utils/                      # 工具函数
 │       ├── iframe-helper.ts        # iframe 查找和等待工具
 │       └── image-downloader.ts     # 图片下载工具
 ├── dist/                           # 构建输出目录
-│   └── xuexitong-ppt-downloader.user.js  # 最终用户脚本
 ├── package.json                    # 项目配置和依赖
 ├── tsconfig.json                   # TypeScript 配置
 ├── tsup.config.ts                  # 构建工具配置
