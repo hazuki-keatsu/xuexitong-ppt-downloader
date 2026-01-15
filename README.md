@@ -1,3 +1,5 @@
+<img src="./icon.png" alt="icon.png" width="72" align="right">
+
 # 学习通 PPT 下载器
 
 > 一键下载学习通（超星）课程中的 PPT 课件为 PDF 文件
@@ -22,15 +24,21 @@
 
 ## 安装
 
-### 1. 安装浏览器扩展
+### 方法一：油猴脚本
 
-首先需要安装用户脚本管理器，例如 [Tampermonkey](https://www.tampermonkey.net/)
+1. 确保已安装用户脚本管理器，例如 [Tampermonkey](https://www.tampermonkey.net/)
+2. 下载 [tampermonkey](https://github.com/hazuki-keatsu/xuexitong-ppt-downloader/tree/main/dist/tampermonkey) 文件夹中的 `xuexitong-ppt-downloader.user.js`
+3. 在 Tampermonkey 中 `管理面板->实用工具->导入->选择文件` 导入脚本
+4. 启用脚本
 
-### 2. 安装脚本
+### 方法二：浏览器扩展（Chrome/Edge）
 
-1. 下载 `dist/xuexitong-ppt-downloader.user.js`
-2. 在 Tampermonkey 中 `管理面板->实用工具->导入->选择文件` 导入脚本
-3. 启用脚本
+1. 下载 [extension](https://github.com/hazuki-keatsu/xuexitong-ppt-downloader/tree/main/dist/extension) 中的 `xuexitong-ppt-downloader.zip` 并解压
+2. 打开浏览器扩展管理页面
+   - Chrome: `chrome://extensions/`
+   - Edge: `edge://extensions/`
+3. 开启右上角的 **"开发者模式"**
+4. 点击 **"加载已解压的扩展程序"**，选择解压后的文件夹
 
 ## 使用方法
 

@@ -1,9 +1,15 @@
 # Change Log
 
-## [Unreleased] - 2026-01-09
+## [0.2.3] - 2026-01-15
 
 ### Fixed
 - 修复了由于 SPA 路由导致的按钮没有正确挂载到页面中。
+
+### Added
+- 新增 Chrome/Edge 浏览器扩展支持。
+- 新增 `extension` 构建流程，支持自动生成 `manifest.json`、`background.js` 和打包 ZIP。
+- 新增构建产物自动备份功能，现在 `dist/extension/legacy` 目录下会保留历史版本的压缩包。
+- 实现了 `GM_xmlhttpRequest` 的 polyfill，确保扩展版与油猴脚本版共享同一套核心逻辑。
 
 ## [0.2.2] - 2026-01-07
 

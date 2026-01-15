@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name         学习通 PPT 下载器
 // @namespace    https://keatsu.top/
-// @version      0.2.2
+// @version      0.2.3
 // @description  适用于学习通网页版的 PPT 下载器
 // @author       hazuki-keatsu
 // @match        https://*.chaoxing.com/mycourse/studentstudy*
+// @match        https://*.chaoxing.com/mooc-ans/mycourse/studentstudy*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @run-at       document-end
-// @updateURL    https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js
-// @downloadURL  https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js
+// @updateURL    https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/tampermonkey/xuexitong-ppt-downloader.user.js
+// @downloadURL  https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/tampermonkey/xuexitong-ppt-downloader.user.js
 // @homepageURL  https://github.com/hazuki-keatsu/xuexitong-ppt-downloader
 // @license      MIT
 // ==/UserScript==

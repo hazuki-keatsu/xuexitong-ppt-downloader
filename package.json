@@ -3,7 +3,9 @@
   "version": "0.2.3",
   "description": "适用于学习通网页版的 PPT 下载器",
   "scripts": {
-    "build": "tsup"
+    "build": "tsup --config tsup.tampermonkey.config.ts && tsup --config tsup.extension.config.ts",
+    "build:tamper": "tsup --config tsup.tampermonkey.config.ts",
+    "build:ext": "tsup --config tsup.extension.config.ts"
   },
   "keywords": [
     "Downloader",
@@ -13,10 +15,12 @@
   "license": "MIT",
   "packageManager": "pnpm@10.27.0",
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/node": "^25.0.3",
     "@types/tampermonkey": "^5.0.5",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.51.0",
+    "archiver": "^7.0.1",
     "eslint": "^9.39.2",
     "prettier": "^3.7.4",
     "tsup": "^8.5.1",
@@ -24,18 +28,27 @@
   },
   "tampermonkey": {
     "namespace": "https://keatsu.top/",
-    "match": "https://*.chaoxing.com/mycourse/studentstudy*",
+    "match": [
+      "https://*.chaoxing.com/mycourse/studentstudy*",
+      "https://*.chaoxing.com/mooc-ans/mycourse/studentstudy*"
+    ],
     "grant": [
       "GM_getValue",
       "GM_setValue",
       "GM_xmlhttpRequest"
     ],
     "runAt": "document-end",
-    "updateURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js",
-    "downloadURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/xuexitong-ppt-downloader.user.js",
+    "updateURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/tampermonkey/xuexitong-ppt-downloader.user.js",
+    "downloadURL": "https://raw.githubusercontent.com/hazuki-keatsu/xuexitong-ppt-downloader/main/dist/tampermonkey/xuexitong-ppt-downloader.user.js",
     "homepageURL": "https://github.com/hazuki-keatsu/xuexitong-ppt-downloader"
   },
+  "extension": {
+    "icon": "icon.png"
+  },
   "dependencies": {
-    "jspdf": "^3.0.4"
+    "i18next": "^25.7.4",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "jspdf": "^3.0.4",
+    "react-i18next": "^16.5.3"
   }
 }

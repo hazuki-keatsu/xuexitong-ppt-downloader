@@ -29,7 +29,7 @@ const userScriptMeta = `// ==UserScript==
 // @version      ${pkgVersion}
 // @description  ${pkgDescription}
 // @author       ${pkgAuthor}
-// @match        ${tmConfig.match}
+${tmConfig.match.map((match: any) => `// @match        ${match}`).join('\n')}
 ${tmConfig.grant.map((grant: any) => `// @grant        ${grant}`).join('\n')}
 // @run-at       ${tmConfig.runAt}
 // @updateURL    ${tmConfig.updateURL}
@@ -44,7 +44,7 @@ export default defineConfig({
     'xuexitong-ppt-downloader.user': 'src/index.ts',
   },
   format: ['iife'],
-  outDir: 'dist',
+  outDir: 'dist/tampermonkey',
   outExtension() {
     return {
       js: '.js',
@@ -59,13 +59,13 @@ export default defineConfig({
     js: userScriptMeta
   },
   onSuccess: async () => {
-    const legacyDir = path.join(__dirname, 'dist', 'legacy');
+    const legacyDir = path.join(__dirname, 'dist', 'tampermonkey', 'legacy');
     if (!fs.existsSync(legacyDir)) {
       fs.mkdirSync(legacyDir, { recursive: true });
     }
     // 这里的文件名需要跟 entry key + outExtension 对应
     const baseName = 'xuexitong-ppt-downloader.user.js';
-    const srcPath = path.join(__dirname, 'dist', baseName);
+    const srcPath = path.join(__dirname, 'dist', 'tampermonkey', baseName);
     const destPath = path.join(legacyDir, baseName.replace('.user.js', `_${pkgVersion}.user.js`));
     
     if (fs.existsSync(srcPath)) {
