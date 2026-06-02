@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.2.4] - 2026-06-02
+
+### Fixed
+- 添加页面`https://*.chaoxing.com/mooc2-ans/mycourse/stu*`进入脚本匹配项。
+
 ## [0.2.3] - 2026-01-15
 
 ### Fixed

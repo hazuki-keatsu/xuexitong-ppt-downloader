@@ -1,11 +1,12 @@
 // ==UserScript==
 // @name         学习通 PPT 下载器
 // @namespace    https://keatsu.top/
-// @version      0.2.3
+// @version      0.2.4
 // @description  适用于学习通网页版的 PPT 下载器
 // @author       hazuki-keatsu
 // @match        https://*.chaoxing.com/mycourse/studentstudy*
 // @match        https://*.chaoxing.com/mooc-ans/mycourse/studentstudy*
+// @match        https://*.chaoxing.com/mooc2-ans/mycourse/stu*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
