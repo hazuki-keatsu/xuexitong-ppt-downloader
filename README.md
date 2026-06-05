@@ -69,9 +69,13 @@
 ```
 xuexitong-ppt-downloader/
 ├── src/
-│   ├── index.ts                    # 主入口，脚本初始化和协调
+│   ├── index.ts                    # 主入口，根据 URL 选择对应下载器
+│   ├── config.ts                   # 性能配置选项
 │   ├── types.ts                    # TypeScript 类型定义
 │   ├── core/                       # 核心业务逻辑
+│   │   ├── downloaders/            # 页面下载器（按页面类型分发）
+│   │   │   ├── chapter-downloader.ts  # 章节 Tab 页下载器
+│   │   │   └── material-downloader.ts # 资料页下载器（mooc2-ans）
 │   │   ├── ppt-worker.ts           # Web Worker 逻辑主体
 │   │   ├── ppt-extractor.ts        # PPT 信息提取器
 │   │   ├── download-controller.ts  # 下载控制器
@@ -143,7 +147,10 @@ xuexitong-ppt-downloader/
 
 ### 使用限制
 
-1. **仅支持学习通平台**：脚本仅在 `https://*.chaoxing.com/mycourse/studentstudy*` 域名下生效
+1. **仅支持学习通平台**：脚本在以下页面生效
+   - `https://*.chaoxing.com/mycourse/studentstudy*`（章节 Tab）
+   - `https://*.chaoxing.com/mooc-ans/mycourse/studentstudy*`（章节 Tab）
+   - `https://*.chaoxing.com/mooc2-ans/mycourse/stu*`（资料页）
 2. **需要完整加载**：确保 PPT 在页面中已完全加载后再下载
 3. **浏览器要求**：建议使用 Chrome/Edge/Firefox 最新版
 
@@ -193,7 +200,13 @@ $ pnpm --version
 pnpm install
 
 # 构建命令
-pnpm build
+pnpm build        # 构建全部（油猴 + 扩展）
+pnpm build:tamper # 仅构建油猴脚本 → dist/tampermonkey/
+pnpm build:ext    # 仅构建浏览器扩展 → dist/extension/
+
+# 代码质量
+pnpm lint         # ESLint 检查
+pnpm format       # Prettier 格式化
 ```
 
 ### 脚本性能配置选项
