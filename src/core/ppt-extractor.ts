@@ -20,7 +20,7 @@ export async function extractPPTInfo(
       try {
         const data = JSON.parse(dataAttr);
         fileName =
-          data.name?.replace(/\.(pptx?|pdf)$/i, ".pdf") || "download.pdf";
+          data.name?.replace(/\.[^.]+$/, "") + ".pdf" || "download.pdf";
       } catch (e) {
         console.warn("无法解析 data 属性:", e);
       }

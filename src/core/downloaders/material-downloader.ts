@@ -163,7 +163,7 @@ export class MaterialDownloader extends ChapterDownloader {
       ) as HTMLInputElement | null;
 
       if (nameInput?.value) {
-        pptInfo.fileName = nameInput.value.replace(/\.(pptx?|pdf)$/i, ".pdf");
+        pptInfo.fileName = nameInput.value.replace(/\.[^.]+$/, "") + ".pdf";
       }
     } catch (e) {
       // 获取失败则保留 extractPPTInfo 返回的默认文件名

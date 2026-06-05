@@ -7,6 +7,9 @@
 - 为项目添加基本的 Lint 和 Format 命令。
 - 为项目添加 CLAUDE.md 上下文文件。
 
+### Fixed
+- 修复了下载文件的后缀名匹配错误。
+
 ### Deprecated
 - 移除了原有的`.eslintrc.js`的配置文件。
 
