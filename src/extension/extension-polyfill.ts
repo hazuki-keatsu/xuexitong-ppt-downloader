@@ -89,6 +89,6 @@ if (typeof window !== 'undefined') {
   
   // Mock other GM functions if needed
   window.GM_getValue = function(key, def) { return def; }
-  window.GM_setValue = function(key, val) {}
+  window.GM_setValue = function() {}
   window.GM_info = { script: { version: '1.0' } };
 }

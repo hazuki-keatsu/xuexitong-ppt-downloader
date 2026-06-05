@@ -56,7 +56,7 @@ function findIframeRecursively(doc: Document, depth: number = 0, results: HTMLIF
       findIframeRecursively(iframeDoc, depth + 1, results);
       
     } catch (e) {
-      // 跨域限制
+      console.log(`[iframe-helper][findIframeRecursively] Fail to find out panView: ${e}`)
     }
   }
   

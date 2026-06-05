@@ -124,7 +124,6 @@ class XuexitongPPTDownloader {
   private async handleDownload(
     pptIframe: HTMLIFrameElement,
     buttonGroup: ButtonGroup,
-    iframeDoc: Document
   ): Promise<void> {
     // 创建下载控制器
     const controller = new DownloadController();
@@ -234,7 +233,7 @@ class XuexitongPPTDownloader {
       
       // 创建并添加按钮组到 iframe 内部
       const buttonGroup = new ButtonGroup(
-        () => this.handleDownload(pptIframe, buttonGroup, iframeDoc),
+        () => this.handleDownload(pptIframe, buttonGroup),
         () => this.handleStop(buttonGroup),
         iframeDoc
       );
