@@ -17,9 +17,9 @@ export class DownloadButton {
    * 创建下载按钮
    */
   private createButton(): HTMLButtonElement {
-    const button = this.targetDocument.createElement('button');
-    button.textContent = '下载 PPT';
-    button.className = 'Downloader Button';
+    const button = this.targetDocument.createElement("button");
+    button.textContent = "下载 PPT";
+    button.className = "Downloader Button";
     button.style.cssText = `
       position: absolute;
       bottom: 4px;
@@ -38,20 +38,28 @@ export class DownloadButton {
     `;
 
     // 添加悬停效果（使用passive提升性能）
-    button.addEventListener('mouseenter', () => {
-      if (!button.disabled) {
-        button.style.transform = 'translateY(-2px)';
-        button.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-      }
-    }, { passive: true });
+    button.addEventListener(
+      "mouseenter",
+      () => {
+        if (!button.disabled) {
+          button.style.transform = "translateY(-2px)";
+          button.style.boxShadow = "0 6px 20px rgba(102, 126, 234, 0.6)";
+        }
+      },
+      { passive: true },
+    );
 
-    button.addEventListener('mouseleave', () => {
-      button.style.transform = 'translateY(0)';
-      button.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-    }, { passive: true });
+    button.addEventListener(
+      "mouseleave",
+      () => {
+        button.style.transform = "translateY(0)";
+        button.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
+      },
+      { passive: true },
+    );
 
     // 绑定点击事件
-    button.addEventListener('click', () => {
+    button.addEventListener("click", () => {
       if (!button.disabled) {
         this.onClick();
       }
@@ -99,8 +107,8 @@ export class DownloadButton {
    */
   public setDisabled(disabled: boolean): void {
     this.button.disabled = disabled;
-    this.button.style.opacity = disabled ? '0.6' : '1';
-    this.button.style.cursor = disabled ? 'not-allowed' : 'pointer';
+    this.button.style.opacity = disabled ? "0.6" : "1";
+    this.button.style.cursor = disabled ? "not-allowed" : "pointer";
   }
 
   /**

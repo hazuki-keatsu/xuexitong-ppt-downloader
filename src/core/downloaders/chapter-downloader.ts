@@ -3,11 +3,14 @@
  * 从学习通网页中的章节Tab页中提取 PPT 预览图片并合成为 PDF
  */
 
-import { ButtonGroup } from '../../ui/button-group';
-import { findPPTIframes } from '../../utils/iframe-helper';
-import { extractPPTInfo } from '../../core/ppt-extractor';
-import { generatePDF, savePDF } from '../../core/pdf-generator';
-import { DownloadController, DownloadAbortedError } from '../../core/download-controller';
+import { ButtonGroup } from "../../ui/button-group";
+import { findPPTIframes } from "../../utils/iframe-helper";
+import { extractPPTInfo } from "../../core/ppt-extractor";
+import { generatePDF, savePDF } from "../../core/pdf-generator";
+import {
+  DownloadController,
+  DownloadAbortedError,
+} from "../../core/download-controller";
 
 export class ChapterDownloader {
   protected buttonGroups: ButtonGroup[] = [];
@@ -24,11 +27,11 @@ export class ChapterDownloader {
    * 初始化下载器
    */
   private init(): void {
-    console.log('[PPT下载器] 脚本已启动');
-    
+    console.log("[PPT下载器] 脚本已启动");
+
     // 等待页面加载完成后添加下载按钮
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
         this.addDownloadButton();
       });
     } else {
@@ -37,10 +40,10 @@ export class ChapterDownloader {
 
     this.observeIframes();
     this.initUrlChangeListener();
-    
+
     this.startRetryTimer();
   }
-  
+
   /**
    * 定期重试查找iframe和添加按钮
    */
@@ -48,19 +51,19 @@ export class ChapterDownloader {
     let retryCount = 0;
     const maxRetries = 10;
     const retryInterval = 2000;
-    
+
     const timer = setInterval(() => {
       retryCount++;
-      
+
       // 检查是否有按钮已挂载
-      const hasButtons = this.buttonGroups.some(btn => btn.isMounted());
+      const hasButtons = this.buttonGroups.some((btn) => btn.isMounted());
       if (hasButtons) {
         clearInterval(timer);
         return;
       }
-      
+
       this.addDownloadButton();
-      
+
       if (retryCount >= maxRetries) {
         clearInterval(timer);
       }
@@ -98,20 +101,20 @@ export class ChapterDownloader {
       setTimeout(() => this.addDownloadButton(), 1500);
     };
 
-    window.addEventListener('popstate', handleUrlChange);
-    window.addEventListener('hashchange', handleUrlChange);
+    window.addEventListener("popstate", handleUrlChange);
+    window.addEventListener("hashchange", handleUrlChange);
 
     // 劫持 history 方法以监听 pushState 和 replaceState
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
-    history.pushState = function(...args) {
+    history.pushState = function (...args) {
       const result = originalPushState.apply(this, args);
       handleUrlChange();
       return result;
     };
 
-    history.replaceState = function(...args) {
+    history.replaceState = function (...args) {
       const result = originalReplaceState.apply(this, args);
       handleUrlChange();
       return result;
@@ -131,14 +134,14 @@ export class ChapterDownloader {
 
     // 切换到下载状态
     buttonGroup.startDownload();
-    buttonGroup.updateDownloadState('正在获取信息...', true);
+    buttonGroup.updateDownloadState("正在获取信息...", true);
 
     try {
       // 提取 PPT 信息
       const pptInfo = await extractPPTInfo(pptIframe);
       if (!pptInfo) {
-        alert('无法获取 PPT 信息，请确保 PPT 已完全加载');
-        buttonGroup.updateDownloadState('下载 PPT', false);
+        alert("无法获取 PPT 信息，请确保 PPT 已完全加载");
+        buttonGroup.updateDownloadState("下载 PPT", false);
         buttonGroup.finishDownload();
         return;
       }
@@ -147,16 +150,23 @@ export class ChapterDownloader {
       controller.throwIfAborted();
 
       // 生成 PDF (可能返回单个 Blob 或 Blob 数组)
-      const result = await generatePDF(pptInfo, (current, total) => {
-        buttonGroup.updateDownloadState(`下载中 ${current}/${total}...`, true);
-      }, controller);
+      const result = await generatePDF(
+        pptInfo,
+        (current, total) => {
+          buttonGroup.updateDownloadState(
+            `下载中 ${current}/${total}...`,
+            true,
+          );
+        },
+        controller,
+      );
 
       // 保存 PDF
       if (Array.isArray(result)) {
         // 分卷保存
         result.forEach((blob, index) => {
           // 移除扩展名，加上后缀
-          const name = pptInfo.fileName.replace(/\.pdf$/i, '');
+          const name = pptInfo.fileName.replace(/\.pdf$/i, "");
           const partName = `${name}_Part${index + 1}.pdf`;
           savePDF(blob, partName);
         });
@@ -165,29 +175,29 @@ export class ChapterDownloader {
         savePDF(result, pptInfo.fileName);
       }
 
-      buttonGroup.updateDownloadState('下载完成！', false);
+      buttonGroup.updateDownloadState("下载完成！", false);
       setTimeout(() => {
-        buttonGroup.updateDownloadState('下载 PPT', false);
+        buttonGroup.updateDownloadState("下载 PPT", false);
       }, 2000);
 
-      console.log('PDF 生成完成:', pptInfo.fileName);
+      console.log("PDF 生成完成:", pptInfo.fileName);
     } catch (error) {
       // 处理取消错误
       if (error instanceof DownloadAbortedError) {
-        console.log('[PPT下载器] 下载已被用户取消');
-        buttonGroup.updateDownloadState('已取消', false);
+        console.log("[PPT下载器] 下载已被用户取消");
+        buttonGroup.updateDownloadState("已取消", false);
         setTimeout(() => {
-          buttonGroup.updateDownloadState('下载 PPT', false);
+          buttonGroup.updateDownloadState("下载 PPT", false);
         }, 1500);
       } else {
-        console.error('下载失败:', error);
-        buttonGroup.updateDownloadState('下载失败', false);
+        console.error("下载失败:", error);
+        buttonGroup.updateDownloadState("下载失败", false);
 
         setTimeout(() => {
-          buttonGroup.updateDownloadState('下载 PPT', false);
+          buttonGroup.updateDownloadState("下载 PPT", false);
         }, 2000);
 
-        alert('下载失败，请查看控制台了解详情');
+        alert("下载失败，请查看控制台了解详情");
       }
     } finally {
       // 结束下载状态
@@ -202,8 +212,8 @@ export class ChapterDownloader {
   protected handleStop(buttonGroup: ButtonGroup): void {
     const controller = this.controllers.get(buttonGroup);
     if (controller) {
-      controller.abort('用户点击停止');
-      buttonGroup.updateStopText('正在停止...');
+      controller.abort("用户点击停止");
+      buttonGroup.updateStopText("正在停止...");
     }
   }
 
@@ -214,40 +224,43 @@ export class ChapterDownloader {
     // 查找所有 PPT iframe
     const pptIframes = findPPTIframes();
     if (pptIframes.length === 0) return;
-    
+
     let newButtonCount = 0;
-    
+
     // 为每个 iframe 创建按钮
     for (const pptIframe of pptIframes) {
       // 获取 iframe 的 document
-      const iframeDoc = pptIframe.contentDocument || pptIframe.contentWindow?.document;
+      const iframeDoc =
+        pptIframe.contentDocument || pptIframe.contentWindow?.document;
       if (!iframeDoc?.body) continue;
 
       // 检查是否已经为当前的 document 实例添加过按钮
       // 如果 iframe 发生了内部跳转，document 对象会改变，需要重新添加按钮
       const lastProcessedDoc = this.processedIframes.get(pptIframe);
       if (lastProcessedDoc === iframeDoc) continue;
-      
+
       // 尝试查找 navigation 容器
-      const navContainer = iframeDoc.getElementById('navigation');
-      
+      const navContainer = iframeDoc.getElementById("navigation");
+
       // 创建并添加按钮组到 iframe 内部
       const buttonGroup = new ButtonGroup(
         () => this.handleDownload(pptIframe, buttonGroup),
         () => this.handleStop(buttonGroup),
-        iframeDoc
+        iframeDoc,
       );
-      
+
       buttonGroup.mount(navContainer);
       this.buttonGroups.push(buttonGroup);
-      
+
       // 更新缓存为当前的 document 对象
       this.processedIframes.set(pptIframe, iframeDoc);
       newButtonCount++;
     }
-    
+
     if (newButtonCount > 0) {
-      console.log(`[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`);
+      console.log(
+        `[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`,
+      );
     }
   }
 }

@@ -23,7 +23,7 @@ export class DownloadController {
   /**
    * 取消下载
    */
-  abort(reason = '用户取消'): void {
+  abort(reason = "用户取消"): void {
     this.aborted = true;
     this.abortReason = reason;
     console.log(`[下载控制器] 下载已取消: ${reason}`);
@@ -43,7 +43,7 @@ export class DownloadController {
    */
   throwIfAborted(): void {
     if (this.aborted) {
-      throw new DownloadAbortedError(this.abortReason || '用户取消');
+      throw new DownloadAbortedError(this.abortReason || "用户取消");
     }
   }
 }
@@ -54,6 +54,6 @@ export class DownloadController {
 export class DownloadAbortedError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'DownloadAbortedError';
+    this.name = "DownloadAbortedError";
   }
 }

@@ -4,16 +4,16 @@ interface GMXHRDetails {
   method?: string;
   url: string;
   headers?: Record<string, string>;
-  responseType?: 'text' | 'json' | 'blob' | 'arraybuffer';
+  responseType?: "text" | "json" | "blob" | "arraybuffer";
   onload?: (response: any) => void;
   onerror?: (error: any) => void;
 }
 
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.GM_xmlhttpRequest = function (details: GMXHRDetails) {
     chrome.runtime.sendMessage(
       {
-        type: 'GM_xmlhttpRequest',
+        type: "GM_xmlhttpRequest",
         details: {
           url: details.url,
           method: details.method,
@@ -35,7 +35,7 @@ if (typeof window !== 'undefined') {
 
           // Helper to convert dataURL to Blob
           const dataURLtoBlob = (dataurl: string) => {
-            const arr = dataurl.split(',');
+            const arr = dataurl.split(",");
             const mime = arr[0].match(/:(.*?);/)[1];
             const bstr = atob(arr[1]);
             let n = bstr.length;
@@ -46,7 +46,7 @@ if (typeof window !== 'undefined') {
             return new Blob([u8arr], { type: mime });
           };
 
-          if (details.responseType === 'arraybuffer') {
+          if (details.responseType === "arraybuffer") {
             dataURLtoBlob(dataUrl)
               .arrayBuffer()
               .then((buffer) => {
@@ -59,7 +59,7 @@ if (typeof window !== 'undefined') {
                   });
                 }
               });
-          } else if (details.responseType === 'blob') {
+          } else if (details.responseType === "blob") {
             const blob = dataURLtoBlob(dataUrl);
             if (details.onload) {
               details.onload({
@@ -70,25 +70,27 @@ if (typeof window !== 'undefined') {
               });
             }
           } else {
-             // Fallback or other types if needed, but current usage is blob/arraybuffer
-             if (details.onload) {
-                details.onload({
-                  status: response.status,
-                  statusText: response.statusText,
-                   // For text, we'd need to decode base64 manually if the background sends dataURL.
-                   // Assuming blob usage for now as per analysis.
-                  response: response.response, 
-                  readyState: 4,
-                });
-             }
+            // Fallback or other types if needed, but current usage is blob/arraybuffer
+            if (details.onload) {
+              details.onload({
+                status: response.status,
+                statusText: response.statusText,
+                // For text, we'd need to decode base64 manually if the background sends dataURL.
+                // Assuming blob usage for now as per analysis.
+                response: response.response,
+                readyState: 4,
+              });
+            }
           }
         }
-      }
+      },
     );
   };
-  
+
   // Mock other GM functions if needed
-  window.GM_getValue = function(key, def) { return def; }
-  window.GM_setValue = function() {}
-  window.GM_info = { script: { version: '1.0' } };
+  window.GM_getValue = function (key, def) {
+    return def;
+  };
+  window.GM_setValue = function () {};
+  window.GM_info = { script: { version: "1.0" } };
 }

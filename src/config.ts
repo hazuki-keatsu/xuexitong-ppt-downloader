@@ -9,5 +9,5 @@ export const CONFIG = {
   /** CPU 冷却时间 (ms) */
   CPU_COOLDOWN: 0,
   /** 图片压缩质量 (0-1) */
-  IMAGE_QUALITY: 1
+  IMAGE_QUALITY: 1,
 } as const;

@@ -3,7 +3,10 @@ import { ButtonGroup } from "../../ui/button-group";
 import { findPPTIframes } from "../../utils/iframe-helper";
 import { extractPPTInfo } from "../ppt-extractor";
 import { generatePDF, savePDF } from "../pdf-generator";
-import { DownloadController, DownloadAbortedError } from "../download-controller";
+import {
+  DownloadController,
+  DownloadAbortedError,
+} from "../download-controller";
 
 export class MaterialDownloader extends ChapterDownloader {
   constructor() {
@@ -51,7 +54,7 @@ export class MaterialDownloader extends ChapterDownloader {
       const buttonGroup = new ButtonGroup(
         () => this.handleDownload(pptIframe, buttonGroup),
         () => this.handleStop(buttonGroup),
-        iframeDoc
+        iframeDoc,
       );
 
       // 挂载到 navigation 的父节点下，与 navigation / panView 平级
@@ -62,14 +65,14 @@ export class MaterialDownloader extends ChapterDownloader {
 
     if (newButtonCount > 0) {
       console.log(
-        `[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`
+        `[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`,
       );
     }
   }
 
   protected async handleDownload(
     pptIframe: HTMLIFrameElement,
-    buttonGroup: ButtonGroup
+    buttonGroup: ButtonGroup,
   ): Promise<void> {
     const controller = new DownloadController();
     this.controllers.set(buttonGroup, controller);
@@ -94,9 +97,12 @@ export class MaterialDownloader extends ChapterDownloader {
       const result = await generatePDF(
         pptInfo,
         (current, total) => {
-          buttonGroup.updateDownloadState(`下载中 ${current}/${total}...`, true);
+          buttonGroup.updateDownloadState(
+            `下载中 ${current}/${total}...`,
+            true,
+          );
         },
-        controller
+        controller,
       );
 
       if (Array.isArray(result)) {
@@ -141,22 +147,29 @@ export class MaterialDownloader extends ChapterDownloader {
    */
   private patchFileNameFromPanView(
     pptIframe: HTMLIFrameElement,
-    pptInfo: { fileName: string }
+    pptInfo: { fileName: string },
   ): void {
     try {
       const iframeDoc =
         pptIframe.contentDocument || pptIframe.contentWindow?.document;
-      const panViewIframe = iframeDoc?.getElementById("panView") as HTMLIFrameElement | null;
+      const panViewIframe = iframeDoc?.getElementById(
+        "panView",
+      ) as HTMLIFrameElement | null;
       const panViewDoc =
-        panViewIframe?.contentDocument || panViewIframe?.contentWindow?.document;
-      const nameInput = panViewDoc?.getElementById("fileInfoNameInput") as HTMLInputElement | null;
+        panViewIframe?.contentDocument ||
+        panViewIframe?.contentWindow?.document;
+      const nameInput = panViewDoc?.getElementById(
+        "fileInfoNameInput",
+      ) as HTMLInputElement | null;
 
       if (nameInput?.value) {
         pptInfo.fileName = nameInput.value.replace(/\.(pptx?|pdf)$/i, ".pdf");
       }
     } catch (e) {
       // 获取失败则保留 extractPPTInfo 返回的默认文件名
-      console.log(`[MaterialDownloader][patchFileNameFromPanView] Fail to get file name: ${e}`)
+      console.log(
+        `[MaterialDownloader][patchFileNameFromPanView] Fail to get file name: ${e}`,
+      );
     }
   }
 }

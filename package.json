@@ -5,7 +5,9 @@
   "scripts": {
     "build": "tsup --config tsup.tampermonkey.config.ts && tsup --config tsup.extension.config.ts",
     "build:tamper": "tsup --config tsup.tampermonkey.config.ts",
-    "build:ext": "tsup --config tsup.extension.config.ts"
+    "build:ext": "tsup --config tsup.extension.config.ts",
+    "lint": "eslint src",
+    "format": "prettier --write src"
   },
   "keywords": [
     "Downloader",
