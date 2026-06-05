@@ -12,7 +12,9 @@
 > 
 > 脚本作者对于脚本使用者的任何行为不负任何责任，本仓库仅为仓库作者的学习目的而建立，如有任何侵犯您的合法权益的行为，请联系我进行修改，或者删除。
 
-![Preview](./preview.png)
+![Preview1](./assets/preview_1.png)
+
+![Preview2](./assets/preview_2.png)
 
 ## 功能特性
 
