@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.3.0] - 2026-06-05
+
+### Added
+- 添加对页面`https://*.chaoxing.com/mooc2-ans/mycourse/stu*`的下载器按钮的完全支持。
+- 为项目添加基本的 Lint 和 Format 命令。
+- 为项目添加 CLAUDE.md 上下文文件。
+
+### Deprecated
+- 移除了原有的`.eslintrc.js`的配置文件。
+
 ## [0.2.4] - 2026-06-02
 
 ### Fixed
