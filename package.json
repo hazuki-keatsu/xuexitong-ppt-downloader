@@ -1,6 +1,6 @@
 {
   "name": "xuexitong-ppt-downloader",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "description": "适用于学习通网页版的 PPT 下载器",
   "scripts": {
     "build": "tsup --config tsup.tampermonkey.config.ts && tsup --config tsup.extension.config.ts",

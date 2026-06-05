@@ -4,6 +4,8 @@ module.exports = {
   parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
   plugins: ['@typescript-eslint'],
   rules: {
-    '@typescript-eslint/no-unused-vars': 'error'
+    '@typescript-eslint/no-unused-vars': ['error', {
+      caughtErrorsIgnorePattern: '_',
+    }]
   }
 };

@@ -44,7 +44,7 @@ export class ButtonGroup {
     div.className = 'Downloader ButtonGroup';
     div.style.cssText = `
       position: absolute;
-      bottom: 4px;
+      top: 4px;
       left: 4px;
       z-index: 9999;
       display: flex;
