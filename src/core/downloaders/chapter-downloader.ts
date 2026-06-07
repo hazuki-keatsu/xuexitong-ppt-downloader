@@ -128,6 +128,10 @@ export class ChapterDownloader {
     pptIframe: HTMLIFrameElement,
     buttonGroup: ButtonGroup,
   ): Promise<void> {
+    if (this.tryGetRawFile(pptIframe)) {
+      return;
+    }
+
     // 创建下载控制器
     const controller = new DownloadController();
     this.controllers.set(buttonGroup, controller);
@@ -262,5 +266,20 @@ export class ChapterDownloader {
         `[PPT下载器] 新增 ${newButtonCount} 个下载按钮，总计 ${this.buttonGroups.length} 个`,
       );
     }
+  }
+
+  /**
+   * 尝试通过源文件直链下载，跳过 PDF 生成流程。
+   * 不可下载时 href 为 javascript:void(0)，此时回退到常规流程。
+   */
+  protected tryGetRawFile(pptIframe: HTMLIFrameElement): boolean {
+    const iframeDoc = pptIframe.contentDocument || pptIframe.contentWindow?.document;
+    const downloadUrl = iframeDoc?.getElementById("downloadUrl") as HTMLAnchorElement | null;
+    if (!downloadUrl?.href || downloadUrl.href.startsWith("javascript:")) {
+      return false;
+    }
+
+    window.open(downloadUrl.href, "_blank");
+    return true;
   }
 }

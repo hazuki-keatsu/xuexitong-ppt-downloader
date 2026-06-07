@@ -74,6 +74,10 @@ export class MaterialDownloader extends ChapterDownloader {
     pptIframe: HTMLIFrameElement,
     buttonGroup: ButtonGroup,
   ): Promise<void> {
+    if (this.tryGetRawFile(pptIframe)) {
+      return;
+    }
+
     const controller = new DownloadController();
     this.controllers.set(buttonGroup, controller);
 
