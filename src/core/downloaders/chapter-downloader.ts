@@ -15,8 +15,6 @@ import {
 export class ChapterDownloader {
   protected buttonGroups: ButtonGroup[] = [];
   protected controllers: Map<ButtonGroup, DownloadController> = new Map();
-  // 存储 iframe 对应的 document 对象，用于检测 iframe 是否发生了导航或重载
-  private processedIframes = new WeakMap<HTMLIFrameElement, Document>();
   private mutationTimeout: number | null = null;
 
   constructor() {
@@ -238,10 +236,8 @@ export class ChapterDownloader {
         pptIframe.contentDocument || pptIframe.contentWindow?.document;
       if (!iframeDoc?.body) continue;
 
-      // 检查是否已经为当前的 document 实例添加过按钮
-      // 如果 iframe 发生了内部跳转，document 对象会改变，需要重新添加按钮
-      const lastProcessedDoc = this.processedIframes.get(pptIframe);
-      if (lastProcessedDoc === iframeDoc) continue;
+      // 按实际 DOM 去重，避免多个下载器实例向同一 document 重复挂载
+      if (iframeDoc.querySelector(".Downloader.ButtonGroup")) continue;
 
       // 尝试查找 navigation 容器
       const navContainer = iframeDoc.getElementById("navigation");
@@ -256,8 +252,6 @@ export class ChapterDownloader {
       buttonGroup.mount(navContainer);
       this.buttonGroups.push(buttonGroup);
 
-      // 更新缓存为当前的 document 对象
-      this.processedIframes.set(pptIframe, iframeDoc);
       newButtonCount++;
     }
 
